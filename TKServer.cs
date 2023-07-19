@@ -10,6 +10,11 @@ namespace TKServerConsole
     public enum TKMessageType
     {
         LogIn = 10,
+        JoinedPlayerData = 11,
+        ServerPlayerData = 12,
+        PlayerTransformData = 13,
+        PlayerStateData = 14,
+        PlayerLeft = 15,
         ServerData = 20,
         LevelEditorChangeEvents = 100,
         BlockCreateEvent = 101,
@@ -78,7 +83,8 @@ namespace TKServerConsole
                                     hat = incomingMessage.ReadInt32(),
                                     color = incomingMessage.ReadInt32(),
                                     soapbox = incomingMessage.ReadInt32(),
-                                    connection = senderConnection
+                                    connection = senderConnection,
+                                    state = 0
                                 };
 
                                 TKPlayerManager.PlayerLogIn(player);
@@ -91,6 +97,21 @@ namespace TKServerConsole
                                 }
                                 break;
                             case TKMessageType.ServerData:
+                                break;
+                            case TKMessageType.PlayerTransformData:
+                                Vector3 position = new Vector3();
+                                position.x = incomingMessage.ReadFloat();
+                                position.y = incomingMessage.ReadFloat();
+                                position.z = incomingMessage.ReadFloat();
+                                Vector3 euler = new Vector3();
+                                euler.x = incomingMessage.ReadFloat();
+                                euler.y = incomingMessage.ReadFloat();
+                                euler.z = incomingMessage.ReadFloat();
+                                TKPlayerManager.ProcessTransformDataMessage(senderConnection, position, euler);
+                                break;
+                            case TKMessageType.PlayerStateData:
+                                byte state = incomingMessage.ReadByte();
+                                TKPlayerManager.ProcessPlayerStateMessage(senderConnection, state);
                                 break;
                             case TKMessageType.LevelEditorChangeEvents:
 
