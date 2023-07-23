@@ -107,7 +107,8 @@ namespace TKServerConsole
                                 euler.x = incomingMessage.ReadFloat();
                                 euler.y = incomingMessage.ReadFloat();
                                 euler.z = incomingMessage.ReadFloat();
-                                TKPlayerManager.ProcessTransformDataMessage(senderConnection, position, euler);
+                                byte pstate = incomingMessage.ReadByte();
+                                TKPlayerManager.ProcessTransformDataMessage(senderConnection, position, euler, pstate);
                                 break;
                             case TKMessageType.PlayerStateData:
                                 byte state = incomingMessage.ReadByte();

@@ -23,7 +23,7 @@ namespace TKServerConsole
         public static Dictionary<NetConnection, TKPlayer> players = new Dictionary<NetConnection, TKPlayer>();
         public static int connectionIDCounter = 100;
 
-        public static void ProcessTransformDataMessage(NetConnection playerConnection, Vector3 position, Vector3 euler)
+        public static void ProcessTransformDataMessage(NetConnection playerConnection, Vector3 position, Vector3 euler, byte state)
         {
             if(!players.ContainsKey(playerConnection))
             {
@@ -48,6 +48,7 @@ namespace TKServerConsole
             outgoingMessage.Write(euler.x);
             outgoingMessage.Write(euler.y);
             outgoingMessage.Write(euler.z);
+            outgoingMessage.Write(state);
             SendMessageToAllPlayersExceptProvided(outgoingMessage, playerConnection);
         }
 

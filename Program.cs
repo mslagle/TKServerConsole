@@ -58,7 +58,7 @@ namespace TKServerConsole
 
             try
             {
-                Log("Starting Teamkist Server V1.0.");
+                Log("Starting Teamkist Server V1.3.");
                 Log("Reading configuration file.");
 
                 var serverIpString = ConfigurationManager.AppSettings["ServerIP"];
