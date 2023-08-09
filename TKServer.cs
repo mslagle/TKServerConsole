@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Lidgren.Network;
@@ -33,17 +34,18 @@ namespace TKServerConsole
         {
             config = new NetPeerConfiguration("Teamkist");
             config.Port = Program.SERVER_PORT;
-            config.LocalAddress = Program.SERVER_IP;
+            config.LocalAddress = IPAddress.Any;
 
             try
             {
                 server = new NetServer(config);
                 server.Start();
             }
-            catch
+            catch (Exception e)
             {
                 Program.Log("A problem occured when setting up the server. Please check configuration.");
-                throw new ArgumentException();
+                Program.Log(e.ToString());
+                throw;
             }
 
             Program.Log("Starting server on " + Program.SERVER_IP + ":" + Program.SERVER_PORT);

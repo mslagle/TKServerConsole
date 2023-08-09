@@ -17,7 +17,7 @@ namespace TKServerConsole
         private static string serverSavePath;
         private static DateTime lastSaveTime;
 
-        public static void Initialize()
+        public static void Initialize(Boolean loadExistingAtStartup)
         {
             projectPath = Path.Combine(Program.SERVER_BASE_PATH, Program.SERVER_LEVEL_NAME);
             zeepSavePath = Path.Combine(projectPath, "ZeepSaves");
@@ -44,6 +44,10 @@ namespace TKServerConsole
             if(saves.Length == 0)
             {
                 Program.Log("No saves found.");
+            }
+            else if (loadExistingAtStartup == false)
+            {
+                Program.Log("LoadBackupOnStart is true, creating new save at startup.");
             }
             else
             {
