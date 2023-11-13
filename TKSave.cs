@@ -47,7 +47,7 @@ namespace TKServerConsole
             }
             else if (loadExistingAtStartup == false)
             {
-                Program.Log("LoadBackupOnStart is true, creating new save at startup.");
+                Program.Log("LoadBackupOnStart is false, creating new save at startup.");
             }
             else
             {
