@@ -5,8 +5,9 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Lidgren.Network;
+using TKServerConsole.Utils;
 
-namespace TKServerConsole
+namespace TKServerConsole.Managers
 {
     public enum TKMessageType
     {
@@ -121,7 +122,7 @@ namespace TKServerConsole
                                 //Create a new message to send to other players so they receive the updates as well.
                                 NetOutgoingMessage outgoingMessage = server.CreateMessage();
                                 outgoingMessage.Write((byte)TKMessageType.LevelEditorChangeEvents);
-                                
+
                                 int changeCount = incomingMessage.ReadInt32();
                                 outgoingMessage.Write(changeCount);
 
@@ -134,8 +135,8 @@ namespace TKServerConsole
                                 for (int i = 0; i < changeCount; i++)
                                 {
                                     TKMessageType changeEventType = (TKMessageType)incomingMessage.ReadByte();
-                                    outgoingMessage.Write((byte)changeEventType);                                    
-                                    
+                                    outgoingMessage.Write((byte)changeEventType);
+
                                     switch (changeEventType)
                                     {
                                         case TKMessageType.BlockCreateEvent:

@@ -1,15 +1,15 @@
-﻿using System;
-using System.Linq;
-using System.Net;
-using System.Configuration;
-using System.IO;
-using System.Runtime.InteropServices;
+﻿using System.Net;
 using System.Diagnostics;
 using System.Globalization;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
+using TKServerConsole.Managers;
+using TKServerConsole.Configuration;
 
 namespace TKServerConsole
 {
-    public static class Program
+    public class Program
     {
         //Default Settings.
         private static readonly IPAddress DEFAULT_IP = IPAddress.Parse((string)"0.0.0.0");
@@ -40,7 +40,7 @@ namespace TKServerConsole
             @"     |_| |___/_/ \_\_|  |_|_|\_\___|___/ |_|  ",
         };
 
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             if (Debugger.IsAttached) { CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.GetCultureInfo("en-US"); }
 
@@ -59,18 +59,52 @@ namespace TKServerConsole
 
             AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
 
+            var configuration = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.json")
+            .Build();
+
+            var services = new ServiceCollection();
+            services.AddLogging(builder =>
+            {
+                builder.AddConfiguration(configuration.GetSection("Logging"));
+                builder.AddSimpleConsole(options =>
+                {
+                    options.IncludeScopes = false;
+                    options.SingleLine = true;
+                    options.TimestampFormat = "HH:mm:ss";
+                });
+                builder.AddFile(o =>
+                {
+                    o.RootPath = AppContext.BaseDirectory;
+                });
+            });
+
+            services.AddSingleton<IConfiguration>(configuration);
+            services.AddSingleton<TeamkistConfiguration>();
+
+            await using (var sp = services.BuildServiceProvider())
+            {
+                ILogger<Program> logger = sp.GetService<ILoggerFactory>().CreateLogger<Program>();
+
+                TeamkistConfiguration teamkistConfiguration = sp.GetService<TeamkistConfiguration>();
+
+                logger.LogInformation("Testing");
+                teamkistConfiguration.LogConfiguration(); 
+            }
+
+            return;
             try
             {
                 Log("Starting Teamkist Server V1.5");
                 Log("Reading configuration file.");
 
-                var serverIpString = ConfigurationManager.AppSettings["ServerIP"];
-                var serverPortString = ConfigurationManager.AppSettings["ServerPort"];
-                var levelName = ConfigurationManager.AppSettings["LevelName"];
-                var autoSaveIntervalString = ConfigurationManager.AppSettings["AutoSaveInterval"];
-                var backupCountString = ConfigurationManager.AppSettings["BackupCount"];
-                var loadBackupOnStart = ConfigurationManager.AppSettings["LoadBackupOnStart"];
-                var keepBackupWithNoEditors = ConfigurationManager.AppSettings["KeepBackupWithNoEditors"];
+                var serverIpString = System.Configuration.ConfigurationManager.AppSettings["ServerIP"];
+                var serverPortString = System.Configuration.ConfigurationManager.AppSettings["ServerPort"];
+                var levelName = System.Configuration.ConfigurationManager.AppSettings["LevelName"];
+                var autoSaveIntervalString = System.Configuration.ConfigurationManager.AppSettings["AutoSaveInterval"];
+                var backupCountString = System.Configuration.ConfigurationManager.AppSettings["BackupCount"];
+                var loadBackupOnStart = System.Configuration.ConfigurationManager.AppSettings["LoadBackupOnStart"];
+                var keepBackupWithNoEditors = System.Configuration.ConfigurationManager.AppSettings["KeepBackupWithNoEditors"];
 
                 SERVER_IP = string.IsNullOrWhiteSpace(serverIpString) ? DEFAULT_IP : IPAddress.Parse(serverIpString);
                 SERVER_PORT = string.IsNullOrWhiteSpace(serverPortString) ? DEFAULT_PORT : int.Parse(serverPortString);

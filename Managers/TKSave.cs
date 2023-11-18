@@ -7,8 +7,9 @@ using System.IO;
 using Newtonsoft.Json;
 using System.Text.RegularExpressions;
 using System.Globalization;
+using TKServerConsole.Utils;
 
-namespace TKServerConsole
+namespace TKServerConsole.Managers
 {
     public static class TKSave
     {
@@ -17,7 +18,7 @@ namespace TKServerConsole
         private static string serverSavePath;
         private static DateTime lastSaveTime;
 
-        public static void Initialize(Boolean loadExistingAtStartup)
+        public static void Initialize(bool loadExistingAtStartup)
         {
             projectPath = Path.Combine(Program.SERVER_BASE_PATH, Program.SERVER_LEVEL_NAME);
             zeepSavePath = Path.Combine(projectPath, "ZeepSaves");
@@ -41,7 +42,7 @@ namespace TKServerConsole
             DirectoryInfo serverSavesDirectory = new DirectoryInfo(serverSavePath);
             FileInfo[] saves = serverSavesDirectory.GetFiles("*.teamkist", SearchOption.TopDirectoryOnly);
 
-            if(saves.Length == 0)
+            if (saves.Length == 0)
             {
                 Program.Log("No saves found.");
             }
@@ -71,7 +72,7 @@ namespace TKServerConsole
 
                 TKEditor.blocks.Clear();
 
-                foreach(TKBlock b in saveFile.blocks)
+                foreach (TKBlock b in saveFile.blocks)
                 {
                     TKEditor.blocks.Add(b.UID, b);
                 }
@@ -82,7 +83,7 @@ namespace TKServerConsole
 
         public static void Save()
         {
-            Program.Log("Saving...");
+            //Program.Log("Saving...");
 
             //Create a new save file
             TKSaveFile saveFile = new TKSaveFile();
@@ -106,7 +107,7 @@ namespace TKServerConsole
             ManageSaveFileCount();
             ManageZeepSaveFileCount();
 
-            Program.Log("Saved!");
+            //Program.Log("Saved!");
         }
 
         //Save a server file in zeeplevel format in the zeeplevel folder.
@@ -135,7 +136,7 @@ namespace TKServerConsole
             fileLines.Add("0,0,0,0,0,0,0,0");
             fileLines.Add($"invalid track,0,0,0,{saveFile.skybox},{saveFile.floor}");
 
-            foreach(TKBlock block in saveFile.blocks)
+            foreach (TKBlock block in saveFile.blocks)
             {
                 try
                 {
@@ -143,7 +144,7 @@ namespace TKServerConsole
                 }
                 catch
                 {
-                   
+
                 }
             }
 

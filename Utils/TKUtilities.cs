@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
-namespace TKServerConsole
+namespace TKServerConsole.Utils
 {
     public class TKSaveFile
     {
@@ -57,7 +57,7 @@ namespace TKServerConsole
 
         public static void AssignPropertiesToTKBlock(TKBlock tkBlock, string properties)
         {
-            List<float> propertyList = PropertyStringToList(properties);           
+            List<float> propertyList = PropertyStringToList(properties);
             tkBlock.position.x = propertyList[0];
             tkBlock.position.y = propertyList[1];
             tkBlock.position.z = propertyList[2];

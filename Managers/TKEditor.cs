@@ -4,8 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Lidgren.Network;
+using TKServerConsole.Utils;
 
-namespace TKServerConsole
+namespace TKServerConsole.Managers
 {
     public static class TKEditor
     {
@@ -63,7 +64,7 @@ namespace TKServerConsole
         {
             if (blocks.ContainsKey(UID))
             {
-                TKUtilities.AssignPropertiesToTKBlock(blocks[UID], properties);                
+                TKUtilities.AssignPropertiesToTKBlock(blocks[UID], properties);
             }
             else
             {

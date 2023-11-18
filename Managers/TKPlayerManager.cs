@@ -4,8 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Lidgren.Network;
+using TKServerConsole.Utils;
 
-namespace TKServerConsole
+namespace TKServerConsole.Managers
 {
     public class TKPlayer
     {
@@ -13,7 +14,7 @@ namespace TKServerConsole
         public string name;
         public int hat;
         public int color;
-        public int soapbox;        
+        public int soapbox;
         public NetConnection connection;
         public byte state;
     }
@@ -25,15 +26,15 @@ namespace TKServerConsole
 
         public static void ProcessTransformDataMessage(NetConnection playerConnection, Vector3 position, Vector3 euler, byte state)
         {
-            if(!players.ContainsKey(playerConnection))
+            if (!players.ContainsKey(playerConnection))
             {
                 Program.Log("Can't process transform data as player connection is not known!");
                 return;
             }
 
             int playerID = players[playerConnection].ID;
-                       
-            if(players.Count <= 1)
+
+            if (players.Count <= 1)
             {
                 //Theres only 1 player, no need to send it.
                 return;
@@ -77,7 +78,7 @@ namespace TKServerConsole
 
         public static void PlayerLogIn(TKPlayer player)
         {
-            if(players.ContainsKey(player.connection))
+            if (players.ContainsKey(player.connection))
             {
                 Program.Log("Player trying to log in is already logged in! Returning.");
                 return;
@@ -91,15 +92,15 @@ namespace TKServerConsole
             Program.Log($"{player.name} joined the game!");
 
             //If there is only 1 player right now, we don't need to send any messages.
-            if(players.Count == 1)
+            if (players.Count == 1)
             {
                 return;
             }
 
             //To the connecting player, send a message with all the information about the other players that are already online.
-            NetOutgoingMessage serverPlayerDataMessage = CreateServerPlayerDataMessage(player.connection);     
-            
-            if(serverPlayerDataMessage != null)
+            NetOutgoingMessage serverPlayerDataMessage = CreateServerPlayerDataMessage(player.connection);
+
+            if (serverPlayerDataMessage != null)
             {
                 //Send the message.
                 SendMessageToSinglePlayer(serverPlayerDataMessage, player.connection);
@@ -108,13 +109,13 @@ namespace TKServerConsole
             //To all the other players, send a message with the information about the current connecting player.
             NetOutgoingMessage joinedPlayerDataMessage = CreateJoinedPlayerDataMessage(player.connection);
             SendMessageToAllPlayersExceptProvided(joinedPlayerDataMessage, player.connection);
-        }   
-        
+        }
+
         public static NetOutgoingMessage CreateServerPlayerDataMessage(NetConnection exclude)
         {
             List<NetConnection> connections = players.Keys.Where(connection => connection != exclude).ToList();
 
-            if(connections.Count == 0)
+            if (connections.Count == 0)
             {
                 //Shouldn't happen but just in case.
                 return null;
@@ -125,7 +126,7 @@ namespace TKServerConsole
             outgoingMessage.Write(connections.Count);
 
             //Foreach connections write the data in the message.
-            foreach(NetConnection connection in connections)
+            foreach (NetConnection connection in connections)
             {
                 TKPlayer p = players[connection];
                 outgoingMessage.Write(p.ID);
@@ -153,7 +154,7 @@ namespace TKServerConsole
 
             return outgoingMessage;
         }
-        
+
         public static void PlayerLogOut(NetConnection connection)
         {
             if (!players.ContainsKey(connection))
@@ -195,13 +196,13 @@ namespace TKServerConsole
             }
 
             TKServer.server.SendMessage(outgoingMessage, connections, NetDeliveryMethod.ReliableOrdered, 0);
-        }    
+        }
 
         public static void SendMessageToAllPlayersExceptProvided(NetOutgoingMessage outgoingMessage, NetConnection excludedConnection)
         {
             List<NetConnection> connections = players.Keys.Where(connection => connection != excludedConnection).ToList();
 
-            if(connections.Count <= 0)
+            if (connections.Count <= 0)
             {
                 return;
             }
