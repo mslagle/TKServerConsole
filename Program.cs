@@ -89,33 +89,11 @@ namespace TKServerConsole
                 TeamkistConfiguration teamkistConfiguration = sp.GetService<TeamkistConfiguration>();
 
                 logger.LogInformation("Testing");
-                teamkistConfiguration.LogConfiguration(); 
+                teamkistConfiguration.LogConfiguration();
             }
 
             return;
-            try
-            {
-                Log("Starting Teamkist Server V1.5");
-                Log("Reading configuration file.");
-
-                var serverIpString = System.Configuration.ConfigurationManager.AppSettings["ServerIP"];
-                var serverPortString = System.Configuration.ConfigurationManager.AppSettings["ServerPort"];
-                var levelName = System.Configuration.ConfigurationManager.AppSettings["LevelName"];
-                var autoSaveIntervalString = System.Configuration.ConfigurationManager.AppSettings["AutoSaveInterval"];
-                var backupCountString = System.Configuration.ConfigurationManager.AppSettings["BackupCount"];
-                var loadBackupOnStart = System.Configuration.ConfigurationManager.AppSettings["LoadBackupOnStart"];
-                var keepBackupWithNoEditors = System.Configuration.ConfigurationManager.AppSettings["KeepBackupWithNoEditors"];
-
-                SERVER_IP = string.IsNullOrWhiteSpace(serverIpString) ? DEFAULT_IP : IPAddress.Parse(serverIpString);
-                SERVER_PORT = string.IsNullOrWhiteSpace(serverPortString) ? DEFAULT_PORT : int.Parse(serverPortString);
-                SERVER_AUTO_SAVE_INTERVAL = string.IsNullOrWhiteSpace(autoSaveIntervalString) ? DEFAULT_AUTO_SAVE_INTERVAL : int.Parse(autoSaveIntervalString);
-                SERVER_BACKUP_COUNT = string.IsNullOrWhiteSpace(backupCountString) ? DEFAULT_BACKUP_COUNT : int.Parse(backupCountString);
-                LOAD_BACKUP_ON_START = Boolean.TryParse(loadBackupOnStart, out _) ? Boolean.Parse(loadBackupOnStart) : DEFAULT_LOAD_BACKUP_ON_START;
-
-                // TODO - this needs implemented
-                KEEP_BACKUP_WITH_NO_EDITORS = Boolean.TryParse(keepBackupWithNoEditors, out _) ? Boolean.Parse(keepBackupWithNoEditors) : DEFAULT_KEEP_BACKUP_WITH_NO_EDITORS;
-
-                levelName = Path.GetInvalidFileNameChars().Aggregate(levelName, (current, c) => current.Replace(c, '_')).Replace(".zeeplevel", "");
+           te(levelName, (current, c) => current.Replace(c, '_')).Replace(".zeeplevel", "");
                 SERVER_LEVEL_NAME = string.IsNullOrWhiteSpace(levelName) ? DEFAULT_LEVEL_NAME : levelName;
 
                 Log($"IP:\t\t\t{SERVER_IP}");
