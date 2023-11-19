@@ -60,6 +60,16 @@ namespace TKServerConsole.Repositories
             logger.LogInformation($"Started server on {configuration.Options.SERVER_IP}:{configuration.Options.SERVER_PORT}");
         }
 
+        public void Shutdown()
+        {
+            server.Shutdown(NetReason.Empty);
+        }
+
+        public NetOutgoingMessage CreateMessage()
+        {
+            return server.CreateMessage();
+        }
+
         public void Run()
         {
             NetIncomingMessage incomingMessage;

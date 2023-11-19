@@ -38,6 +38,23 @@ namespace TKServerConsole.Managers
             server.EditorLevelChanged_SkyboxChanged += SkyboxUpdated;
         }
 
+        public TKSaveFile GenerateSave()
+        {
+            var save = new TKSaveFile();
+            save.floor = FloorID;
+            save.skybox = SkyboxID;
+            save.blocks = Blocks.Select(x => x.Value).ToList();
+
+            return save;
+        }
+
+        public void LoadSave(TKSaveFile saveFile)
+        {
+            FloorID = saveFile.floor;
+            SkyboxID = saveFile.skybox;
+            Blocks = saveFile.blocks.ToDictionary(x => x.UID);
+        }
+
         public NetOutgoingMessage GenerateServerDataMessage()
         {
             NetOutgoingMessage outgoingMessage = server.server.CreateMessage();

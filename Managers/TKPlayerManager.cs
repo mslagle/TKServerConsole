@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using Lidgren.Network;
@@ -15,95 +17,129 @@ namespace TKServerConsole.Managers
     {
         public ILogger logger { get; private set; }
         public TeamkistServer server { get; private set; }
+        public TKEditorState state { get; private set; }
 
+        public Dictionary<NetConnection, TKPlayer> Players { get; set; }
+        public int ConnectionIDCounter { get; set; }
 
-        public Dictionary<NetConnection, TKPlayer> players { get; set; }
-        public int connectionIDCounter { get; set; }
-
-        public TKPlayerManager(ILogger<TKPlayerManager> logger, TeamkistServer server)
+        public TKPlayerManager(ILogger<TKPlayerManager> logger, TeamkistServer server, TKEditorState state)
         {
             this.logger = logger;
             this.server = server;
+            this.state = state;
 
-            this.players = new Dictionary<NetConnection, TKPlayer>();
-            this.connectionIDCounter = 100;
+            this.Players = new Dictionary<NetConnection, TKPlayer>();
+            this.ConnectionIDCounter = 100;
+
+            this.server.PlayerLevelChanged += Server_PlayerLevelChanged;
+            this.server.PlayerLogIn += Server_PlayerLogIn;
+            this.server.PlayerLogOut += Server_PlayerLogOut;
+            this.server.PlayerTransform += Server_PlayerTransform;
+            this.server.PlayerState += Server_PlayerState;
         }
 
-
-        public static void ProcessTransformDataMessage(NetConnection playerConnection, Vector3 position, Vector3 euler, byte state)
+        private void Server_PlayerState(object? sender, PlayerStateArgs e)
         {
-            if (!players.ContainsKey(playerConnection))
+            if (!Players.ContainsKey(e.playerConnection))
             {
-                Program.Log("Can't process transform data as player connection is not known!");
+                logger.LogWarning("Can't process transform data as player connection is not known!");
                 return;
             }
 
-            int playerID = players[playerConnection].ID;
+            int playerID = Players[e.playerConnection].ID;
 
-            if (players.Count <= 1)
+            if (Players.Count <= 1)
             {
                 //Theres only 1 player, no need to send it.
                 return;
             }
 
-            NetOutgoingMessage outgoingMessage = TeamkistServer.server.CreateMessage();
-            outgoingMessage.Write((byte)TKMessageType.PlayerTransformData);
-            outgoingMessage.Write(playerID);
-            outgoingMessage.Write(position.x);
-            outgoingMessage.Write(position.y);
-            outgoingMessage.Write(position.z);
-            outgoingMessage.Write(euler.x);
-            outgoingMessage.Write(euler.y);
-            outgoingMessage.Write(euler.z);
-            outgoingMessage.Write(state);
-            SendMessageToAllPlayersExceptProvided(outgoingMessage, playerConnection);
-        }
-
-        public static void ProcessPlayerStateMessage(NetConnection playerConnection, byte state)
-        {
-            if (!players.ContainsKey(playerConnection))
-            {
-                Program.Log("Can't process transform data as player connection is not known!");
-                return;
-            }
-
-            int playerID = players[playerConnection].ID;
-
-            if (players.Count <= 1)
-            {
-                //Theres only 1 player, no need to send it.
-                return;
-            }
-
-            NetOutgoingMessage outgoingMessage = TeamkistServer.server.CreateMessage();
+            NetOutgoingMessage outgoingMessage = server.CreateMessage();
             outgoingMessage.Write((byte)TKMessageType.PlayerStateData);
             outgoingMessage.Write(playerID);
-            outgoingMessage.Write(state);
-            SendMessageToAllPlayersExceptProvided(outgoingMessage, playerConnection);
+            outgoingMessage.Write(e.state);
+            SendMessageToAllPlayersExceptProvided(outgoingMessage, e.playerConnection);
         }
 
-        public static void PlayerLogIn(TKPlayer player)
+        private void Server_PlayerTransform(object? sender, PlayerTransformArgs e)
         {
-            if (players.ContainsKey(player.connection))
+            if (!Players.ContainsKey(e.playerConnection))
             {
-                Program.Log("Player trying to log in is already logged in! Returning.");
+                logger.LogWarning("Can't process transform data as player connection is not known!");
+                return;
+            }
+
+            int playerID = Players[e.playerConnection].ID;
+
+            if (Players.Count <= 1)
+            {
+                //Theres only 1 player, no need to send it.
+                return;
+            }
+
+            NetOutgoingMessage outgoingMessage = server.CreateMessage();
+            outgoingMessage.Write((byte)TKMessageType.PlayerTransformData);
+            outgoingMessage.Write(playerID);
+            outgoingMessage.Write(e.position.x);
+            outgoingMessage.Write(e.position.y);
+            outgoingMessage.Write(e.position.z);
+            outgoingMessage.Write(e.euler.x);
+            outgoingMessage.Write(e.euler.y);
+            outgoingMessage.Write(e.euler.z);
+            outgoingMessage.Write(e.state);
+            SendMessageToAllPlayersExceptProvided(outgoingMessage, e.playerConnection);
+        }
+
+        private void Server_PlayerLogOut(object? sender, PlayerLogOutArgs e)
+        {
+            if (!Players.ContainsKey(e.playerConnection))
+            {
+                logger.LogWarning("Player trying to log out is not registered! Returning.");
+                return;
+            }
+
+            TKPlayer p = Players[e.playerConnection];
+            Players.Remove(e.playerConnection);
+
+            logger.LogInformation($"{p.name} left the game!");
+
+            //To all the other Players, send a message with the ID of the player that left.
+            NetOutgoingMessage playerLeftMessage = CreatePlayerLeftMessage(p.ID);
+            SendMessageToAllPlayers(playerLeftMessage);
+        }
+
+        private void Server_PlayerLogIn(object? sender, PlayerLogInArgs e)
+        {
+            var player = e.player;
+
+            if (Players.ContainsKey(player.connection))
+            {
+                logger.LogWarning($"Player {player.name} is already logged in, ignoring duplicate login event!");
                 return;
             }
 
             //Create a new ID for the player and add it to the dictionary.
-            connectionIDCounter++;
-            player.ID = connectionIDCounter;
-            players.Add(player.connection, player);
+            ConnectionIDCounter++;
+            player.ID = ConnectionIDCounter;
+            Players.Add(player.connection, player);
 
-            Program.Log($"{player.name} joined the game!");
+            logger.LogInformation($"{player.name} joined the game!");
+
+            // If requesting current state, send it now!
+            if (e.requestingServerData)
+            {
+                logger.LogDebug("New connected player is requesting current state, sending now...");
+                var serverDataMessage = state.GenerateServerDataMessage();
+                SendMessageToSinglePlayer(serverDataMessage, player.connection);
+            }
 
             //If there is only 1 player right now, we don't need to send any messages.
-            if (players.Count == 1)
+            if (Players.Count == 1)
             {
                 return;
             }
 
-            //To the connecting player, send a message with all the information about the other players that are already online.
+            //To the connecting player, send a message with all the information about the other Players that are already online.
             NetOutgoingMessage serverPlayerDataMessage = CreateServerPlayerDataMessage(player.connection);
 
             if (serverPlayerDataMessage != null)
@@ -112,14 +148,20 @@ namespace TKServerConsole.Managers
                 SendMessageToSinglePlayer(serverPlayerDataMessage, player.connection);
             }
 
-            //To all the other players, send a message with the information about the current connecting player.
+            //To all the other Players, send a message with the information about the current connecting player.
             NetOutgoingMessage joinedPlayerDataMessage = CreateJoinedPlayerDataMessage(player.connection);
             SendMessageToAllPlayersExceptProvided(joinedPlayerDataMessage, player.connection);
         }
 
-        public static NetOutgoingMessage CreateServerPlayerDataMessage(NetConnection exclude)
+        private void Server_PlayerLevelChanged(object? sender, PlayerLevelChangedArgs e)
         {
-            List<NetConnection> connections = players.Keys.Where(connection => connection != exclude).ToList();
+            SendMessageToAllPlayersExceptProvided(e.message, e.playerConnection);
+        }
+
+
+        public NetOutgoingMessage CreateServerPlayerDataMessage(NetConnection exclude)
+        {
+            List<NetConnection> connections = Players.Keys.Where(connection => connection != exclude).ToList();
 
             if (connections.Count == 0)
             {
@@ -127,14 +169,14 @@ namespace TKServerConsole.Managers
                 return null;
             }
 
-            NetOutgoingMessage outgoingMessage = TeamkistServer.server.CreateMessage();
+            NetOutgoingMessage outgoingMessage = server.CreateMessage();
             outgoingMessage.Write((byte)TKMessageType.ServerPlayerData);
             outgoingMessage.Write(connections.Count);
 
             //Foreach connections write the data in the message.
             foreach (NetConnection connection in connections)
             {
-                TKPlayer p = players[connection];
+                TKPlayer p = Players[connection];
                 outgoingMessage.Write(p.ID);
                 outgoingMessage.Write(p.state);
                 outgoingMessage.Write(p.name);
@@ -146,10 +188,10 @@ namespace TKServerConsole.Managers
             return outgoingMessage;
         }
 
-        public static NetOutgoingMessage CreateJoinedPlayerDataMessage(NetConnection joinedConnection)
+        public NetOutgoingMessage CreateJoinedPlayerDataMessage(NetConnection joinedConnection)
         {
-            TKPlayer p = players[joinedConnection];
-            NetOutgoingMessage outgoingMessage = TeamkistServer.server.CreateMessage();
+            TKPlayer p = Players[joinedConnection];
+            NetOutgoingMessage outgoingMessage = server.CreateMessage();
             outgoingMessage.Write((byte)TKMessageType.JoinedPlayerData);
             outgoingMessage.Write(p.ID);
             outgoingMessage.Write(p.state);
@@ -161,59 +203,41 @@ namespace TKServerConsole.Managers
             return outgoingMessage;
         }
 
-        public static void PlayerLogOut(NetConnection connection)
+        public NetOutgoingMessage CreatePlayerLeftMessage(int leavingID)
         {
-            if (!players.ContainsKey(connection))
-            {
-                Program.Log("Player trying to log out is not registered! Returning.");
-                return;
-            }
-
-            TKPlayer p = players[connection];
-            players.Remove(connection);
-
-            Program.Log($"{p.name} left the game!");
-
-            //To all the other players, send a message with the ID of the player that left.
-            NetOutgoingMessage playerLeftMessage = CreatePlayerLeftMessage(p.ID);
-            SendMessageToAllPlayers(playerLeftMessage);
-        }
-
-        public static NetOutgoingMessage CreatePlayerLeftMessage(int leavingID)
-        {
-            NetOutgoingMessage outgoingMessage = TeamkistServer.server.CreateMessage();
+            NetOutgoingMessage outgoingMessage = server.CreateMessage();
             outgoingMessage.Write((byte)TKMessageType.PlayerLeft);
             outgoingMessage.Write(leavingID);
             return outgoingMessage;
         }
 
-        public static void SendMessageToSinglePlayer(NetOutgoingMessage outgoingMessage, NetConnection connection)
+        public void SendMessageToSinglePlayer(NetOutgoingMessage outgoingMessage, NetConnection connection)
         {
-            TeamkistServer.server.SendMessage(outgoingMessage, connection, NetDeliveryMethod.ReliableOrdered);
+            server.SendMessage(outgoingMessage, connection);
         }
 
-        public static void SendMessageToAllPlayers(NetOutgoingMessage outgoingMessage)
+        public void SendMessageToAllPlayers(NetOutgoingMessage outgoingMessage)
         {
-            List<NetConnection> connections = players.Keys.ToList();
+            List<NetConnection> connections = Players.Keys.ToList();
 
             if (connections.Count <= 0)
             {
                 return;
             }
 
-            TeamkistServer.server.SendMessage(outgoingMessage, connections, NetDeliveryMethod.ReliableOrdered, 0);
+            server.SendMessage(outgoingMessage, connections);
         }
 
-        public static void SendMessageToAllPlayersExceptProvided(NetOutgoingMessage outgoingMessage, NetConnection excludedConnection)
+        public void SendMessageToAllPlayersExceptProvided(NetOutgoingMessage outgoingMessage, NetConnection excludedConnection)
         {
-            List<NetConnection> connections = players.Keys.Where(connection => connection != excludedConnection).ToList();
+            List<NetConnection> connections = Players.Keys.Where(connection => connection != excludedConnection).ToList();
 
             if (connections.Count <= 0)
             {
                 return;
             }
 
-            TeamkistServer.server.SendMessage(outgoingMessage, connections, NetDeliveryMethod.ReliableOrdered, 0);
+            server.SendMessage(outgoingMessage, connections);
         }
     }
 }

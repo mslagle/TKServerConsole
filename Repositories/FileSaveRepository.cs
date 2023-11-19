@@ -63,8 +63,9 @@ namespace TKServerConsole.Repositories
             FileInfo[] saves = serverSavesDirectory.GetFiles("*.teamkist", SearchOption.TopDirectoryOnly).OrderByDescending(x => x.CreationTime).ToArray();
             FileInfo latestSave = saves.FirstOrDefault();
 
-            if (saves != null)
+            if (latestSave != null)
             {
+                logger.LogInformation($"Latest save found at {latestSave.FullName}");
                 string jsonString = File.ReadAllText(latestSave.FullName);
                 TKSaveFile saveFile = JsonConvert.DeserializeObject<TKSaveFile>(jsonString);
                 return saveFile;
@@ -79,6 +80,9 @@ namespace TKServerConsole.Repositories
             string jsonString = JsonConvert.SerializeObject(save);
             string filePath = GetTimestampedFilePath(ServerSavePath, configuration.Options.LEVEL_NAME + ".teamkist");
             File.WriteAllText(filePath, jsonString);
+            logger.LogDebug($"Saved current state to {filePath}");
+
+            SaveZeepLevel(save);
         }
 
         public void SaveZeepLevel(TKSaveFile save)
@@ -113,6 +117,8 @@ namespace TKServerConsole.Repositories
 
             string zeepPath = GetTimestampedFilePath(ZeepSavePath, configuration.Options.LEVEL_NAME + ".zeeplevel");
             File.WriteAllLines(zeepPath, fileLines);
+
+            logger.LogDebug($"Saved current backup to {zeepPath}");
         }
 
         public string GetTimestampedFilePath(string directoryPath, string fileName)
