@@ -4,25 +4,31 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Lidgren.Network;
+using Microsoft.Extensions.Logging;
+using TKServerConsole.Models;
+using TKServerConsole.Repositories;
 using TKServerConsole.Utils;
 
 namespace TKServerConsole.Managers
 {
-    public class TKPlayer
+    public class TKPlayerManager
     {
-        public int ID;
-        public string name;
-        public int hat;
-        public int color;
-        public int soapbox;
-        public NetConnection connection;
-        public byte state;
-    }
+        public ILogger logger { get; private set; }
+        public TeamkistServer server { get; private set; }
 
-    public static class TKPlayerManager
-    {
-        public static Dictionary<NetConnection, TKPlayer> players = new Dictionary<NetConnection, TKPlayer>();
-        public static int connectionIDCounter = 100;
+
+        public Dictionary<NetConnection, TKPlayer> players { get; set; }
+        public int connectionIDCounter { get; set; }
+
+        public TKPlayerManager(ILogger<TKPlayerManager> logger, TeamkistServer server)
+        {
+            this.logger = logger;
+            this.server = server;
+
+            this.players = new Dictionary<NetConnection, TKPlayer>();
+            this.connectionIDCounter = 100;
+        }
+
 
         public static void ProcessTransformDataMessage(NetConnection playerConnection, Vector3 position, Vector3 euler, byte state)
         {
@@ -40,7 +46,7 @@ namespace TKServerConsole.Managers
                 return;
             }
 
-            NetOutgoingMessage outgoingMessage = TKServer.server.CreateMessage();
+            NetOutgoingMessage outgoingMessage = TeamkistServer.server.CreateMessage();
             outgoingMessage.Write((byte)TKMessageType.PlayerTransformData);
             outgoingMessage.Write(playerID);
             outgoingMessage.Write(position.x);
@@ -69,7 +75,7 @@ namespace TKServerConsole.Managers
                 return;
             }
 
-            NetOutgoingMessage outgoingMessage = TKServer.server.CreateMessage();
+            NetOutgoingMessage outgoingMessage = TeamkistServer.server.CreateMessage();
             outgoingMessage.Write((byte)TKMessageType.PlayerStateData);
             outgoingMessage.Write(playerID);
             outgoingMessage.Write(state);
@@ -121,7 +127,7 @@ namespace TKServerConsole.Managers
                 return null;
             }
 
-            NetOutgoingMessage outgoingMessage = TKServer.server.CreateMessage();
+            NetOutgoingMessage outgoingMessage = TeamkistServer.server.CreateMessage();
             outgoingMessage.Write((byte)TKMessageType.ServerPlayerData);
             outgoingMessage.Write(connections.Count);
 
@@ -143,7 +149,7 @@ namespace TKServerConsole.Managers
         public static NetOutgoingMessage CreateJoinedPlayerDataMessage(NetConnection joinedConnection)
         {
             TKPlayer p = players[joinedConnection];
-            NetOutgoingMessage outgoingMessage = TKServer.server.CreateMessage();
+            NetOutgoingMessage outgoingMessage = TeamkistServer.server.CreateMessage();
             outgoingMessage.Write((byte)TKMessageType.JoinedPlayerData);
             outgoingMessage.Write(p.ID);
             outgoingMessage.Write(p.state);
@@ -175,7 +181,7 @@ namespace TKServerConsole.Managers
 
         public static NetOutgoingMessage CreatePlayerLeftMessage(int leavingID)
         {
-            NetOutgoingMessage outgoingMessage = TKServer.server.CreateMessage();
+            NetOutgoingMessage outgoingMessage = TeamkistServer.server.CreateMessage();
             outgoingMessage.Write((byte)TKMessageType.PlayerLeft);
             outgoingMessage.Write(leavingID);
             return outgoingMessage;
@@ -183,7 +189,7 @@ namespace TKServerConsole.Managers
 
         public static void SendMessageToSinglePlayer(NetOutgoingMessage outgoingMessage, NetConnection connection)
         {
-            TKServer.server.SendMessage(outgoingMessage, connection, NetDeliveryMethod.ReliableOrdered);
+            TeamkistServer.server.SendMessage(outgoingMessage, connection, NetDeliveryMethod.ReliableOrdered);
         }
 
         public static void SendMessageToAllPlayers(NetOutgoingMessage outgoingMessage)
@@ -195,7 +201,7 @@ namespace TKServerConsole.Managers
                 return;
             }
 
-            TKServer.server.SendMessage(outgoingMessage, connections, NetDeliveryMethod.ReliableOrdered, 0);
+            TeamkistServer.server.SendMessage(outgoingMessage, connections, NetDeliveryMethod.ReliableOrdered, 0);
         }
 
         public static void SendMessageToAllPlayersExceptProvided(NetOutgoingMessage outgoingMessage, NetConnection excludedConnection)
@@ -207,7 +213,7 @@ namespace TKServerConsole.Managers
                 return;
             }
 
-            TKServer.server.SendMessage(outgoingMessage, connections, NetDeliveryMethod.ReliableOrdered, 0);
+            TeamkistServer.server.SendMessage(outgoingMessage, connections, NetDeliveryMethod.ReliableOrdered, 0);
         }
     }
 }
