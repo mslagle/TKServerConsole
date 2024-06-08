@@ -22,7 +22,8 @@ namespace TKServerConsole
         BlockDestroyEvent = 102,
         BlockChangeEvent = 103,
         EditorFloorEvent = 104,
-        EditorSkyboxEvent = 105
+        EditorSkyboxEvent = 105,
+        CustomMessage = 200
     }
 
     public static class TKServer
@@ -179,6 +180,16 @@ namespace TKServerConsole
                                 }
 
                                 TKPlayerManager.SendMessageToAllPlayersExceptProvided(outgoingMessage, senderConnection);
+                                break;
+                            case TKMessageType.CustomMessage:
+                                try
+                                {
+                                    string messagePayload = incomingMessage.ReadString();
+                                    NetOutgoingMessage customOutgoingMessage = server.CreateMessage();
+                                    customOutgoingMessage.Write(messagePayload);
+                                    TKPlayerManager.SendMessageToAllPlayersExceptProvided(customOutgoingMessage, senderConnection);
+                                }
+                                catch { }                     
                                 break;
                         }
                         break;
