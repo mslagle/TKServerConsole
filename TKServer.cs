@@ -82,9 +82,19 @@ namespace TKServerConsole
                                 TKPlayer player = new TKPlayer()
                                 {
                                     name = incomingMessage.ReadString(),
-                                    hat = incomingMessage.ReadInt32(),
+                                    zeepkist = incomingMessage.ReadInt32(),
+                                    frontWheels = incomingMessage.ReadInt32(),
+                                    rearWheels = incomingMessage.ReadInt32(),
+                                    paraglider  = incomingMessage.ReadInt32(),
+                                    horn = incomingMessage.ReadInt32(),
+                                    hat =   incomingMessage.ReadInt32(),
+                                    glasses = incomingMessage.ReadInt32(),
+                                    color_body = incomingMessage.ReadInt32(),
+                                    color_leftArm = incomingMessage.ReadInt32(),
+                                    color_rightArm = incomingMessage.ReadInt32(),
+                                    color_leftLeg = incomingMessage.ReadInt32(),
+                                    color_rightLeg = incomingMessage.ReadInt32(),
                                     color = incomingMessage.ReadInt32(),
-                                    soapbox = incomingMessage.ReadInt32(),
                                     connection = senderConnection,
                                     state = 0
                                 };

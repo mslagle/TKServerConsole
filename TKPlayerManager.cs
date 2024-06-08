@@ -11,11 +11,23 @@ namespace TKServerConsole
     {
         public int ID;
         public string name;
-        public int hat;
-        public int color;
-        public int soapbox;        
-        public NetConnection connection;
         public byte state;
+
+        public int zeepkist;
+        public int frontWheels;
+        public int rearWheels;
+        public int paraglider;
+        public int horn;
+        public int hat;
+        public int glasses;
+        public int color_body;
+        public int color_leftArm;
+        public int color_rightArm;
+        public int color_leftLeg;
+        public int color_rightLeg;
+        public int color;
+
+        public NetConnection connection;
     }
 
     public static class TKPlayerManager
@@ -131,9 +143,19 @@ namespace TKServerConsole
                 outgoingMessage.Write(p.ID);
                 outgoingMessage.Write(p.state);
                 outgoingMessage.Write(p.name);
+                outgoingMessage.Write(p.zeepkist);
+                outgoingMessage.Write(p.frontWheels);
+                outgoingMessage.Write(p.rearWheels);
+                outgoingMessage.Write(p.paraglider);
+                outgoingMessage.Write(p.horn);
                 outgoingMessage.Write(p.hat);
+                outgoingMessage.Write(p.glasses);
+                outgoingMessage.Write(p.color_body);
+                outgoingMessage.Write(p.color_leftArm);
+                outgoingMessage.Write(p.color_rightArm);
+                outgoingMessage.Write(p.color_leftLeg);
+                outgoingMessage.Write(p.color_rightLeg);
                 outgoingMessage.Write(p.color);
-                outgoingMessage.Write(p.soapbox);
             }
 
             return outgoingMessage;
@@ -147,9 +169,19 @@ namespace TKServerConsole
             outgoingMessage.Write(p.ID);
             outgoingMessage.Write(p.state);
             outgoingMessage.Write(p.name);
+            outgoingMessage.Write(p.zeepkist);
+            outgoingMessage.Write(p.frontWheels);
+            outgoingMessage.Write(p.rearWheels);
+            outgoingMessage.Write(p.paraglider);
+            outgoingMessage.Write(p.horn);
             outgoingMessage.Write(p.hat);
+            outgoingMessage.Write(p.glasses);
+            outgoingMessage.Write(p.color_body);
+            outgoingMessage.Write(p.color_leftArm);
+            outgoingMessage.Write(p.color_rightArm);
+            outgoingMessage.Write(p.color_leftLeg);
+            outgoingMessage.Write(p.color_rightLeg);
             outgoingMessage.Write(p.color);
-            outgoingMessage.Write(p.soapbox);
 
             return outgoingMessage;
         }

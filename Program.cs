@@ -38,6 +38,7 @@ namespace TKServerConsole
             @"   |_   _| __| /_\ |  \/  | |/ /_ _/ __|_   _|",
             @"     | | | _| / _ \| |\/| | ' < | |\__ \ | |  ",
             @"     |_| |___/_/ \_\_|  |_|_|\_\___|___/ |_|  ",
+            @"                                   by Metalted",
         };
 
         public static void Main(string[] args)
@@ -53,6 +54,8 @@ namespace TKServerConsole
             Console.WriteLine(logo[2]);
             Console.ForegroundColor = ConsoleColor.Blue;
             Console.WriteLine(logo[3]);
+            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.WriteLine(logo[4]);
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("");
             Console.WriteLine("");
@@ -61,7 +64,7 @@ namespace TKServerConsole
 
             try
             {
-                Log("Starting Teamkist Server V1.5");
+                Log("Starting Teamkist Server V1.6");
                 Log("Reading configuration file.");
 
                 var serverIpString = ConfigurationManager.AppSettings["ServerIP"];
@@ -134,7 +137,7 @@ namespace TKServerConsole
 
         public static void Log(string msg)
         {
-            Console.WriteLine(" [TEAMKIST] " + msg);
+            Console.WriteLine(" [TEAMKIST] " + msg); 
         }
 
     }
