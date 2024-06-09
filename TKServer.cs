@@ -186,7 +186,12 @@ namespace TKServerConsole
                                 {
                                     string messagePayload = incomingMessage.ReadString();
                                     NetOutgoingMessage customOutgoingMessage = server.CreateMessage();
-                                    customOutgoingMessage.Write(messagePayload);
+
+                                    //Get the id of the player
+                                    int playerID = TKPlayerManager.players[senderConnection].ID;
+
+                                    customOutgoingMessage.Write((byte)TKMessageType.CustomMessage);
+                                    customOutgoingMessage.Write(messagePayload + ";" + playerID);
                                     TKPlayerManager.SendMessageToAllPlayersExceptProvided(customOutgoingMessage, senderConnection);
                                 }
                                 catch { }                     
